@@ -31,7 +31,7 @@ public class MVCconfig extends WebMvcConfigurationSupport {
 
         //token刷新拦截器
         registry.addInterceptor(new ReflushTokenInterceptor(stringRedisTemplate))
-                .addPathPatterns("/**") //默认拦截所有请求 对于所有请求都要拦截去刷新token
+                .addPathPatterns("/**") //默认拦截所有请求 对于所有请求都要拦截 尝试去刷新token
                 .order(0); //顺序为0 刷新拦截器需要先执行
 
     }

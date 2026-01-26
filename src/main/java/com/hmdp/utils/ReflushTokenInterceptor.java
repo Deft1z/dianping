@@ -13,12 +13,12 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 刷新TOKEN拦截器
+ * 刷新token拦截器
  */
 
 public class ReflushTokenInterceptor implements HandlerInterceptor {
 
-    // new出来的对象是无法直接注入IOC容器的（LoginInterceptor是直接new出来的）
+    // new出来的对象是无法直接注入IOC容器的（MVCconfig.java中的ReflushTokenInterceptor是直接new出来的）
     // 所以这里需要在配置类中注入，然后通过构造器传入到当前类中
     private StringRedisTemplate stringRedisTemplate;
 

@@ -48,11 +48,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public Result sendCode(String phone, HttpSession session) {
         //1.校验手机号 正则表达式
         if(RegexUtils.isPhoneInvalid(phone)){
-            //2.如果不符合 返回错误信息
+            //2.如果不符合要求 返回错误信息
             return Result.fail("手机号格式不正确！");
         }
 
-        //3.符合 生成验证码
+        //3.符合要求 生成验证码
         String code = RandomUtil.randomNumbers(Math.toIntExact(LOGIN_VERIFY_CODE_LENGTH));
 
         //4.保存在Session中
@@ -106,7 +106,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         //6.无论是否新建用户 都需要保存用户信息到Session
         //session.setAttribute("user",user);
-        //数据脱敏: 保护用户隐私信息 减少内存压力
+        //优化1 数据脱敏: 保护用户隐私信息 减少内存压力
         //session.setAttribute("user",BeanUtil.copyProperties(user,UserDTO.class));
 
         //6.保存用户信息到Redis 便于后面逻辑的判断（比如登录判断、随时取用户信息，减少对数据库的查询）

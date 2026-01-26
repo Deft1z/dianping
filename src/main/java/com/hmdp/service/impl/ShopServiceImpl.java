@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 import static com.hmdp.utils.RedisConstants.*;
 
 /**
-
+/ Shop服务类
  */
 @Service
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
@@ -53,8 +53,10 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         //缓存穿透
         //Shop shop = queryWithPassThrough(id);
         //Shop shop = cacheClient.queryWithPassThrough(CACHE_SHOP_KEY,id,Shop.class,this::getById,CACHE_SHOP_TTL,TimeUnit.MINUTES);
+
         //互斥锁解决缓存击穿
         //Shop shop = queryWithMutex(id);
+
         //逻辑过期解决缓存击穿
         //Shop shop = queryWithLogicalExpire(id);
 
@@ -66,16 +68,15 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         return Result.ok(shop);
     }
 
-    //缓存穿透解决方案
+    //缓存穿透解决方案（redis中存入空对象）
     public Shop queryWithPassThrough(Long id) {
-        //1.从redis中查询商铺缓存（shop的JSON格式）
-        String key = CACHE_SHOP_KEY+id;
+        //1.从redis中查询商铺缓存
+        String key = CACHE_SHOP_KEY + id;
         String shopJson = stringRedisTemplate.opsForValue().get(key);
         //2.判断是否存在
         if(StrUtil.isNotBlank(shopJson)) {
             //3.存在 直接返回
             return JSONUtil.toBean(shopJson, Shop.class);
-
         }
         //判断缓存中查询的数据是否是空字符串(isNotBlank把null和空字符串给排除了)
         if(Objects.nonNull(shopJson)){
@@ -93,7 +94,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         //6.存在 写入redis 设置过期时间
         stringRedisTemplate.opsForValue().set(key,JSONUtil.toJsonStr(shop),CACHE_SHOP_TTL, TimeUnit.MINUTES);
         //7.返回
-        return  shop;
+        return shop;
     }
 
 
@@ -146,18 +147,17 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         return shop;
     }
 
-    //线程池
-    private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
+
 
     //逻辑过期解决缓存击穿
     public Shop queryWithLogicalExpire(Long id) {
-        //1.从Redis中查询商铺缓存（shop的JSON格式）
+        //1.从Redis中查询商铺缓存
         String key = CACHE_SHOP_KEY+id;
         String shopJson = stringRedisTemplate.opsForValue().get(key);
 
-        //2.判断是否存在
-        if(StrUtil.isBlank(shopJson)) {
-            //3.不存在 直接返回
+        //2.判断是否命中
+        if(Objects.isNull(shopJson)) {
+            //3.未命中 直接返回
             return null;
         }
 
@@ -172,8 +172,8 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             //5.1未过期 直接返回
             return shop;
         }
-        //5.2已经过期 需要缓存重建
 
+        //5.2已经过期 需要缓存重建
         //6.缓存重建
         //6.1获取互斥锁
         String lockKey = LOCK_SHOP_KEY + id;
@@ -196,23 +196,22 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         }
         // 6.4、获取锁失败，再次查询缓存，判断缓存是否重建（这里双检是有必要的）
         shopJson = stringRedisTemplate.opsForValue().get(key);
-        if (StrUtil.isBlank(shopJson)) {
-            // 3.1 缓存未命中，直接返回失败信息
+        if (Objects.isNull(shopJson)) {
             return null;
         }
-        // 3.2 缓存命中，将JSON字符串反序列化为对象，并判断缓存数据是否逻辑过期
+
+        // 缓存命中，将JSON字符串反序列化为对象，并判断缓存数据是否逻辑过期
         redisData = JSONUtil.toBean(shopJson, RedisData.class);
         // 这里需要先转成JSONObject再转成反序列化，否则可能无法正确映射Shop的字段
         data = (JSONObject) redisData.getData();
         shop = JSONUtil.toBean(data, Shop.class);
-        expireTime = redisData.getExpireTime();
-        if (expireTime.isAfter(LocalDateTime.now())) {
-            // 当前缓存数据未过期，直接返回
-            return shop;
-        }
+
         //6.5 返回结果
         return shop;
     }
+
+    //线程池
+    private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
 
     //获取锁
     private boolean tryLock(String key){
@@ -239,7 +238,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY+id,JSONUtil.toJsonStr(redisData));
     }
 
-    //更新商铺
+    //更新商铺 先更新数据库后删除缓存
     @Transactional
     @Override
     public Result update(Shop shop) {
@@ -254,7 +253,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             throw new RuntimeException("数据库更新失败");
         }
         // 2、删除缓存
-        f = Boolean.TRUE.equals(stringRedisTemplate.delete(CACHE_SHOP_KEY + shop.getId()));
+        f = stringRedisTemplate.delete(CACHE_SHOP_KEY + shop.getId());
         if (!f){
             // 缓存删除失败，抛出异常，事务回滚
             throw new RuntimeException("缓存删除失败");
