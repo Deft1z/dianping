@@ -11,10 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- * <p>
- *  秒杀券下单Controller
- * </p>
- *
+ *  秒杀券下单 Controller
  */
 @RestController
 @RequestMapping("/voucher-order")
@@ -25,7 +22,6 @@ public class VoucherOrderController {
 
     /**
      * 秒杀券下单
-     * @param voucherId
      */
     @PostMapping("seckill/{id}")
     public Result seckillVoucher(@PathVariable("id") Long voucherId) {

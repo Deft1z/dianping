@@ -8,10 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 
 /**
- * <p>
  *  优惠券 Controller
- * </p>
- *
  */
 @RestController
 @RequestMapping("/voucher")

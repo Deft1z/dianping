@@ -24,10 +24,7 @@ import java.util.List;
 import static com.hmdp.utils.RedisConstants.SECKILL_STOCK_KEY;
 
 /**
- * <p>
- *  优惠券 实现类
- * </p>
- *
+ *  优惠券 服务实现类
  */
 @Service
 public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher> implements IVoucherService {
@@ -49,15 +46,18 @@ public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher> impl
         LambdaQueryWrapper<Voucher>queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Voucher::getShopId,shopId);
         List<Voucher> list = this.list(queryWrapper);
-        for(Voucher voucher:list){
-            //如果是秒杀券 填充字段--数量 开始时间 结束时间
-            if(voucher.getType()==1){
+
+        //秒杀券补充字段
+        for(Voucher voucher : list){
+            //如果是秒杀券 填充字段: 数量 开始时间 结束时间
+            if(voucher.getType() == 1){
                 SeckillVoucher seckillVoucher = seckillVoucherService.getById(voucher.getId());
                 voucher.setStock(seckillVoucher.getStock());
                 voucher.setBeginTime(seckillVoucher.getBeginTime());
                 voucher.setEndTime(seckillVoucher.getEndTime());
             }
         }
+
         // 返回结果
         return list;
     }
@@ -70,15 +70,18 @@ public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher> impl
     public void addSeckillVoucher(Voucher voucher) {
         // 保存优惠券
         save(voucher);
-        // 保存秒杀信息
+
+        // 保存秒杀券
         SeckillVoucher seckillVoucher = new SeckillVoucher();
         seckillVoucher.setVoucherId(voucher.getId());
         seckillVoucher.setStock(voucher.getStock());
         seckillVoucher.setBeginTime(voucher.getBeginTime());
         seckillVoucher.setEndTime(voucher.getEndTime());
         seckillVoucherService.save(seckillVoucher);
-        //保存秒杀库存到redis 优化时的第一步 把优惠券信息注入redis
+
+        //保存秒杀库存到redis 【优化时的第一步】
         stringRedisTemplate.opsForValue().set(SECKILL_STOCK_KEY+voucher.getId(),voucher.getStock().toString());
     }
+
 }
 

@@ -29,8 +29,10 @@ end
 --库存充足&&没下单
 --扣库存 incrby stockKey -1
 redis.call('incrby',stockKey,-1)
---保存用户(下单） sadd orderKey userId
+--保存用户(下单）sadd orderKey userId
 redis.call('sadd',orderKey,userId)
 --发送消息到队列中 XADD stream.orders *(消息ID) k1 v1 k2 v2 k3 v3
 redis.call('xadd','stream.orders','*','userId',userId,'voucherId',voucherId,'id',orderId)
+
+--有购买资格 返回0
 return 0

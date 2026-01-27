@@ -5,13 +5,11 @@ import com.hmdp.entity.VoucherOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
- * <p>
- *  服务类
- * </p>
- *
+ *  秒杀券下单服务类
  */
 public interface IVoucherOrderService extends IService<VoucherOrder> {
 
+    Result createVoucherOrder(Long voucherId);
     void createVoucherOrder(VoucherOrder voucherOrder);
-    public Result seckillVoucher(Long voucherId);
+    Result seckillVoucher(Long voucherId);
 }

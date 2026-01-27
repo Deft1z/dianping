@@ -7,10 +7,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import java.util.List;
 
 /**
- * <p>
- *  优惠券
- * </p>
- *
+ *  优惠券 服务类
  */
 public interface IVoucherService extends IService<Voucher> {
 

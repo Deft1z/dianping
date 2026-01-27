@@ -67,6 +67,7 @@ public class Voucher implements Serializable {
      * 优惠券类型
      */
     private Integer status;
+
     /**
      * 库存
      */

@@ -31,8 +31,8 @@ public class RedisIdWorker {
         //生成序列号32位
         //获取当前精确到天的日期
         String date = now.format(DateTimeFormatter.ofPattern("yyyy:MM:dd"));
+        //redis字符串自增的value作为32位序列号 key = icr + 业务名称 + 日期
         long count = stringRedisTemplate.opsForValue().increment("icr:"+keyPrefix+":"+date);
-
         //拼接并返回
         //时间戳左移32位
         return timestamp << BITS_COUNT | count;
