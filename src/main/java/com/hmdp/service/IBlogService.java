@@ -5,11 +5,7 @@ import com.hmdp.entity.Blog;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
- * <p>
  *  博客服务类
- * </p>
- *
-
  */
 public interface IBlogService extends IService<Blog> {
 
@@ -19,7 +15,7 @@ public interface IBlogService extends IService<Blog> {
 
     Result likeBlog(Long id);
 
-    Result queryBlogLikes(Long id);
+    Result queryBlogTop5Likes(Long id);
 
     Result saveBlog(Blog blog);
 

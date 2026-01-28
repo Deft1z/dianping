@@ -39,14 +39,15 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         //1.判断关注还是取关
         if(isFollow){
             //2.关注 新增记录
+            //保存数据库
             Follow follow = new Follow();
             follow.setUserId(userId);
             follow.setFollowUserId(followUserId);
+            boolean isSuccess = save(follow);
 
-            Boolean isSuccess = save(follow);
             if(isSuccess){
-                //保存成功 将这条记录写入redis  sadd userid follow_user_id
-                String key = "FOLLOWS"+userId;
+                //保存到数据库成功 将这条记录写入redis  sadd userid follow_user_id
+                String key = "FOLLOWS:" + userId;
                 stringRedisTemplate.opsForSet().add(key,followUserId.toString());
                 return Result.ok("关注成功！");
             }else return Result.fail("关注失败");
@@ -56,11 +57,12 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
             //delete * from follow where userId = ? and follow_user_id = ?
             LambdaQueryWrapper<Follow>queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(Follow::getUserId,userId)
-                    .eq(Follow::getFollowUserId,followUserId);
-            Boolean isSuccess = this.remove(queryWrapper);
+                        .eq(Follow::getFollowUserId,followUserId);
+            boolean isSuccess = this.remove(queryWrapper);
+
             if(isSuccess){
-                //删除成功 从redis中把这条记录删除  srmv userid follow_user_id
-                String key = "FOLLOWS"+userId;
+                //删除数据库成功 从redis中把这条记录删除  srmv userid follow_user_id
+                String key = "FOLLOWS:" + userId;
                 stringRedisTemplate.opsForSet().remove(key,followUserId.toString());
                 return Result.ok("取消关注成功！");
             }else return Result.fail("取消关注失败");
@@ -68,42 +70,52 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     }
 
     /**
-     *  返回登录用户是否关注了博主
+     *  返回当前登录用户是否关注了博主
      */
     @Override
     public Result isFollow(Long followUserId) {
         //获取当前登录用户
         Long userId = UserHolder.getUser().getId();
+
+        //TODO 优化:从Redis中查询是否关注了博主
+//        String key = "FOLLOWS:" + userId;
+//        Boolean member = stringRedisTemplate.opsForSet().isMember(key, String.valueOf(userId));
+//        if(member){
+//            return Result.ok(true);
+//        }else {
+//            return Result.ok(false);
+//        }
+
         //查询数据库 select * from follow where userId = ? and follow_user_id = ? == null?
         LambdaQueryWrapper<Follow>queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Follow::getUserId,userId)
-                .eq(Follow::getFollowUserId,followUserId);
+                    .eq(Follow::getFollowUserId,followUserId);
         Follow follow = this.getOne(queryWrapper);
         if(follow == null){
             //没有关注
             return Result.ok(false);
-        }else return Result.ok(true);
+        }else {
+            return Result.ok(true);
+        }
     }
 
     /**
-     * 获取与某位用户 的共同关注
-     * @param goalUserId
-     * @return
+     * 获取当前登录用户与某位用户的共同关注
      */
     @Override
     public Result common(Long goalUserId) {
         //1、获取当前登录用户
         Long userId = UserHolder.getUser().getId();
         //2. 从REDIS中执行查询
-        String key1 = "FOLLOWS"+userId;
-        String key2 = "FOLLOWS"+goalUserId;
+        String key1 = "FOLLOWS:"+userId;
+        String key2 = "FOLLOWS:"+goalUserId;
         Set<String> set = stringRedisTemplate.opsForSet().intersect(key1,key2);
         //3.处理查询结果 返回
         if (Objects.isNull(set) || set.isEmpty()) {
             return Result.ok(Collections.emptyList());
         }
         List<UserDTO> list = new ArrayList<>();
-        for(String id:set){
+        for(String id : set){
             User user = userService.getById(id);
             UserDTO userDTO = new UserDTO();
             BeanUtil.copyProperties(user,userDTO);

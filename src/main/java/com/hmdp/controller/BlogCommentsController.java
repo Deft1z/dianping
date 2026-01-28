@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 
 /**
- *  评论类Controller
+ *  评论 Controller
  *
  */
 @RestController

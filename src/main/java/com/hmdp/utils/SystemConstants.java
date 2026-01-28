@@ -1,5 +1,8 @@
 package com.hmdp.utils;
 
+/**
+ * 系统常量类
+ */
 public class SystemConstants {
     public static final String IMAGE_UPLOAD_DIR = "C:\\Users\\FxQovo\\Desktop\\src\\java\\nginx-1.18.0\\html\\hmdp\\imgs";
     public static final String USER_NICK_NAME_PREFIX = "小红薯_";

@@ -23,8 +23,6 @@ public class ShopController {
 
     /**
      * 根据id查询商铺信息
-     * @param id 商铺id
-     * @return 商铺详情数据
      */
     @GetMapping("/{id}")
     public Result queryShopById(@PathVariable("id") Long id) {
@@ -33,21 +31,18 @@ public class ShopController {
 
     /**
      * 新增商铺信息
-     * @param shop 商铺数据
-     * @return 商铺id
      */
     @PostMapping
     public Result saveShop(@RequestBody Shop shop) {
         // 写入数据库
         shopService.save(shop);
-        // 返回店铺id
+        //TODO 写入Redis
+
         return Result.ok(shop.getId());
     }
 
     /**
      * 更新商铺信息
-     * @param shop 商铺数据
-     * @return 无
      */
     @PutMapping
     public Result updateShop(@RequestBody Shop shop) {
@@ -64,7 +59,7 @@ public class ShopController {
     public Result queryShopByType(
             @RequestParam("typeId") Integer typeId,
             @RequestParam(value = "current", defaultValue = "1") Integer current,
-            //前端不一定按地点排序 不一定有这两个参数
+            //前端不一定按地点排序，不一定有x/y这两个参数
             @RequestParam(value = "x",required = false)Double x,
             @RequestParam(value = "y",required = false)Double y
     ) {
@@ -83,7 +78,8 @@ public class ShopController {
             @RequestParam(value = "current", defaultValue = "1") Integer current
     ) {
         // 根据类型分页查询
-        Page<Shop> page = shopService.query()
+        Page<Shop> page = shopService
+                .query()
                 .like(StrUtil.isNotBlank(name), "name", name)
                 .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
         // 返回数据

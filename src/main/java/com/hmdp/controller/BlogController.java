@@ -14,7 +14,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 博客类相关Controller
+ * 博客类 Controller
  */
 @RestController
 @RequestMapping("/blog")
@@ -32,7 +32,7 @@ public class BlogController {
     }
 
     /**
-     * 点赞
+     * 点赞博客
      */
     @PutMapping("/like/{id}")
     public Result likeBlog(@PathVariable("id") Long id) {
@@ -48,7 +48,8 @@ public class BlogController {
         UserDTO user = UserHolder.getUser();
         // 根据用户查询
         Page<Blog> page = blogService.query()
-                .eq("user_id", user.getId()).page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
+                .eq("user_id", user.getId()).
+                page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
         // 获取当前页数据
         List<Blog> records = page.getRecords();
         return Result.ok(records);
@@ -62,35 +63,45 @@ public class BlogController {
         return blogService.queryHotBlog(current);
     }
 
-    //查看探店笔记
+    /**
+     * 根据id查看博客
+     */
     @GetMapping("/{id}")
     public Result queryBlogById(@PathVariable("id") Long id) {
         return blogService.queryBlogById(id);
     }
 
-    //查看探店笔记
+    /**
+     * Zset实现点赞排行榜  查看博客前五个点赞的用户
+     */
     @GetMapping("/likes/{id}")
     public Result queryBlogLikes(@PathVariable("id") Long id) {
-        return blogService.queryBlogLikes(id);
+        return blogService.queryBlogTop5Likes(id);
     }
 
-    //用户笔记
+    /**
+     * 查看用户的博客
+     */
     @GetMapping("/of/user")
     public Result queryBlogByUserId(
             @RequestParam(value = "current", defaultValue = "1") Integer current,
             @RequestParam("id") Long id) {
         // 根据用户查询
         Page<Blog> page = blogService.query()
-                .eq("user_id", id).page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
+                .eq("user_id", id)
+                .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
         // 获取当前页数据
         List<Blog> records = page.getRecords();
         return Result.ok(records);
     }
 
-    //关注推送的博客
-    //这里的参数不是在路径里的 而是？形式 所以要用requestParam
+    /**
+     * 查看关注推送的博客
+     * 这里的参数不是在路径里的 而是？形式（如/users?name=John&age=30） 所以要用requestParam
+     */
     @GetMapping("/of/follow")
-    public Result queryBlogOfFollow(@RequestParam("lastId") Long max, @RequestParam(value = "offset", defaultValue = "0") Integer offset){
+    public Result queryBlogOfFollow(@RequestParam("lastId") Long max,
+                                    @RequestParam(value = "offset", defaultValue = "0") Integer offset){
         return blogService.queryBlogOfFollow(max,offset);
     }
 }

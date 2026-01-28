@@ -57,7 +57,6 @@ public class BlogCommentsServiceImpl extends ServiceImpl<BlogCommentsMapper, Blo
 
     /**
      * 封装用户头像和名字
-     * @param blogComments
      */
     private void queryBlogCommentUser(BlogComments blogComments){
         Long userId = blogComments.getUserId();

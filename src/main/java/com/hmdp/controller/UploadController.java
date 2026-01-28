@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * 下载 Controller
+ * 文件上传 Controller
  */
 @Slf4j
 @RestController
@@ -21,9 +21,7 @@ import java.util.UUID;
 public class UploadController {
 
     /**
-     * 下载图片
-     * @param image
-     * @return
+     * 上传图片
      */
     @PostMapping("blog")
     public Result uploadImage(@RequestParam("file") MultipartFile image) {
@@ -32,7 +30,7 @@ public class UploadController {
             String originalFilename = image.getOriginalFilename();
             // 生成新文件名
             String fileName = createNewFileName(originalFilename);
-            // 保存文件
+            // 保存文件到前端服务器
             image.transferTo(new File(SystemConstants.IMAGE_UPLOAD_DIR, fileName));
             // 返回结果
             log.debug("文件上传成功，{}", fileName);

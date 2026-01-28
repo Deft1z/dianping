@@ -238,7 +238,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY+id,JSONUtil.toJsonStr(redisData));
     }
 
-    //更新商铺 先更新数据库后删除缓存
+    //更新商铺 【先更新数据库后删除缓存】
     @Transactional
     @Override
     public Result update(Shop shop) {
@@ -249,7 +249,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         //1.更新数据库
         boolean f = this.updateById(shop);
         if (!f){
-            // 缓存更新失败，抛出异常，事务回滚
+            // 更新数据库失败，抛出异常，事务回滚
             throw new RuntimeException("数据库更新失败");
         }
         // 2、删除缓存
