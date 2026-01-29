@@ -156,37 +156,37 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     /**
-     * 统计本月连续签到
+     * 统计本月截止今天为止连续签到的连续签到次数
      */
     @Override
     public Result signCount() {
-        //获取本月截止今天为止的所有签到记录--要找到key--要找到用户id 日期
+        //获取本月截止今天为止的所有签到记录
         //1.获取当前登录用户
         Long userId = UserHolder.getUser().getId();
         //2.获取当前时间 年？月？日？
         LocalDateTime now = LocalDateTime.now();
-        //3.拼接KEY sign:yyyyMM
+        //3.拼接KEY sign:userId:yyyyMM
         String key = "sign:" + userId + now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
         //4.根据“日”得到今天是本月的第几天 这里要-1
         int dayOfMonth = now.getDayOfMonth();
         //5.获取本月截止今天为止的所有签到记录 返回的应该是一个十进制数字
         // bitfield get sign:userid:yyyyMM u[dayOfMonth] 0
         List<Long> ret = stringRedisTemplate.opsForValue().bitField(key,
-                BitFieldSubCommands.create()
-                        .get(BitFieldSubCommands.BitFieldType.unsigned(dayOfMonth))
-                        .valueAt(0));
+                        BitFieldSubCommands.create()
+                                            .get(BitFieldSubCommands.BitFieldType.unsigned(dayOfMonth))
+                                            .valueAt(0));
         //非空判断
         if(ret == null|| ret.isEmpty()){
             return Result.ok(0);
         }
-        //返回的是一个非空链表 那么需要的值 一定下标是0
+        //返回的是一个非空列表，那么需要的值一定下标是0
         Long num = ret.get(0);
         if(num == null || num == 0){
             return Result.ok(0);
         }
         //6.与运算
         int cnt = 0;
-        while((num&1)==1){
+        while((num&1) == 1){
             ++cnt;
             num >>>= 1;
         }

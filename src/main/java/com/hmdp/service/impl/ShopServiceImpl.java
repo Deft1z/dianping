@@ -277,33 +277,36 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         //2.计算分页参数
         int from = (current-1) * SystemConstants.DEFAULT_PAGE_SIZE;
         int end = current * SystemConstants.DEFAULT_PAGE_SIZE;
-        //3.查询redis 根据距离排序 分页 结果:shopId distance
+        //3.查询redis  limit = end即要读取end条数据
         String key = "shop:geo:" + typeId;
         GeoResults<RedisGeoCommands.GeoLocation<String>> results = stringRedisTemplate.opsForGeo().radius(
                 key,
                 new Circle(x, y, 5000),
                 RedisGeoCommands.GeoRadiusCommandArgs.newGeoRadiusArgs().includeDistance().limit(end));
-        //4.解析出Id
+        //4.解析数据
+        //4.1 判空
         if(results == null){
             //判空
             return Result.ok(Collections.emptyList());
         }
-        //0-end
+        //4.2 过滤0-from
         List<GeoResult<RedisGeoCommands.GeoLocation<String>>> list = results.getContent();
         if(list.size()<=from){
-            //会跳过from条 得到的ids会为空
+            //得到的数据小于from条 返回空
             return Result.ok(Collections.emptyList());
         }
-        //截取从from-end
+
         List<Long> ids = new ArrayList<>();
         Map<String,Distance> map = new HashMap<>();
-        list.stream().skip(from).forEach(result ->{
-            //获取店铺ID
-            String shopIdStr = result.getContent().getName();
-            ids.add(Long.valueOf(shopIdStr));
-            //获取距离
-            Distance distance = result.getDistance();
-            map.put(shopIdStr,distance);
+        list.stream()
+                .skip(from) //跳过from条
+                .forEach(result ->{
+                    //获取店铺ID
+                    String shopIdStr = result.getContent().getName();
+                    ids.add(Long.valueOf(shopIdStr));
+                    //获取距离
+                    Distance distance = result.getDistance();
+                    map.put(shopIdStr,distance);
         });
         //5.根据id查询shop 要保证有序
         String idStr = StrUtil.join(",",ids);
